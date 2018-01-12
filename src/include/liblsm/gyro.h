@@ -1,10 +1,9 @@
-#ifndef GYRO_H__
-#define GYRO_H__
+#ifndef __GYRO_H__
+#define __GYRO_H__
 
-#define GYRO_SLAVE_ADDRESS 0x68 /*from datasheet: 1101000 */
-                                /*note: datasheet sez 110100x - x is 0 or 1 to have 2 gyros*/
-
-#define GYRO_ID_ADDRESS 0x0 /*WhoAmI (ID) register*/
+#define GYRO_SLAVE_ADDRESS 0x6B
+#define GYRO_ID_ADDRESS 0x0F /*WhoAmI (ID) register*/
+#define GYRO_ID_RETURN 0x69 /*Value of WhoAmI register*/
 
 /*Need to i2c write this in gyro_init*/
 #define GYRO_DLPF_FS_ADDRESS 0x16 /*"full-scale" config register*/
@@ -38,7 +37,9 @@ typedef struct {
   int z;
 } gyro_t;
 
-void gyro_init(void);
-void gyro_read(gyro_t* coordinates);
+void gyro_init_tap_int(void);
+void gyro_init_pedom_poll(void);
+uint16_t read_pedometer_steps(void);
 
-#endif /*GYRO_H__*
+
+#endif /*GYRO_H__*/
