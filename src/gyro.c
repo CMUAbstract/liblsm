@@ -68,6 +68,49 @@ void set_slave_address(uint8_t addr) {
   UCB0CTLW0 &= ~UCSWRST; // enable
   while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
 }
+void gyro_init_pedom_int(void) {
+
+  // Set slave address //
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+
+  uint8_t temp = read_reg(GYRO_ID_ADDRESS);
+  if(temp != GYRO_ID_RETURN) {
+    PRINTF("Error initializing gyro!\r\n");
+    while(1);
+  }
+
+  uint8_t dataToWrite = 0;
+
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_2g;
+  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_26Hz;
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);  
+  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
+  
+  //PRINTF("Wrote data \r\n");
+  set_slave_address(GYRO_SLAVE_ADDRESS);  
+
+  uint8_t dataRead = read_reg(LSM6DS3_ACC_GYRO_CTRL1_XL);
+
+  // May need to add in write to ODR bits here... maybe not though
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL10_C, 0x3E);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS); 
+  write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x40);
+  
+  // Decrease the debounce threshold but leave time at default
+  set_slave_address(GYRO_SLAVE_ADDRESS); 
+  write_reg(LSM6DS3_ACC_GYRO_PEDO_DEB, 0x61);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS); 
+  write_reg(LSM6DS3_ACC_GYRO_INT1_CTRL, 0x80);
+
+  return;
+}
 
 void gyro_init_pedom_poll(void) {
 
@@ -95,7 +138,6 @@ void gyro_init_pedom_poll(void) {
 
   uint8_t dataRead = read_reg(LSM6DS3_ACC_GYRO_CTRL1_XL);
 
-  PRINTF("Wrote %x, read %x \r\n", dataToWrite, dataRead);
 
   // May need to add in write to ODR bits here... maybe not though
 
@@ -104,9 +146,15 @@ void gyro_init_pedom_poll(void) {
   
   set_slave_address(GYRO_SLAVE_ADDRESS); 
   write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x40);
-
+ 
+  // Changes to try to add in step detection interrupt
+  // Decrease the debounce threshold but leave time at default
   set_slave_address(GYRO_SLAVE_ADDRESS); 
-  write_reg(LSM6DS3_ACC_GYRO_INT1_CTRL, 0x10);
+  write_reg(LSM6DS3_ACC_GYRO_PEDO_DEB, 0x61);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS); 
+  //write_reg(LSM6DS3_ACC_GYRO_INT1_CTRL, 0x10);
+  write_reg(LSM6DS3_ACC_GYRO_INT1_CTRL, 0x80);
 
   return;
 }
@@ -158,16 +206,153 @@ void gyro_init_tap_int(void) {
   return;
 }
 
+void gyro_init_raw(void) {
+
+  // Set slave address //
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+
+  uint8_t temp = read_reg(GYRO_ID_ADDRESS);
+  if(temp != GYRO_ID_RETURN) {
+    PRINTF("Error initializing gyro!\r\n");
+    while(1);
+  }
+
+  uint8_t dataToWrite = 0;
+
+  // Set up the accelerometer
+  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
+  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);  
+  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
+ 
+  // Set up the gyro
+  dataToWrite = 0;
+  dataToWrite = LSM6DS3_ACC_GYRO_FS_G_245dps;
+  dataToWrite = LSM6DS3_ACC_GYRO_ODR_G_104Hz; 
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
+  
+  return;
+}
+
+void gyro_init_tilt_int(void) {
+  // Set slave address //
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+
+  uint8_t temp = read_reg(GYRO_ID_ADDRESS);
+  if(temp != GYRO_ID_RETURN) {
+    PRINTF("Error initializing gyro!\r\n");
+    while(1);
+  }
+
+  uint8_t dataToWrite = 0;
+
+  // Set up the accelerometer
+  set_slave_address(GYRO_SLAVE_ADDRESS);  
+  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, 0x20);
+  
+  // Enable embedded functions
+  set_slave_address(GYRO_SLAVE_ADDRESS);  
+  write_reg(LSM6DS3_ACC_GYRO_CTRL10_C, 0x3C);
+
+  // Enable tilt detection
+  set_slave_address(GYRO_SLAVE_ADDRESS);  
+  write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x20);
+
+  // Send tilt detection to INT1
+  set_slave_address(GYRO_SLAVE_ADDRESS);  
+  write_reg(LSM6DS3_ACC_GYRO_MD1_CFG, 0x02);
+
+  return;
+}
 
 uint16_t read_pedometer_steps(void) {
   set_slave_address(GYRO_SLAVE_ADDRESS);
   uint8_t temp = read_reg(LSM6DS3_ACC_GYRO_STEP_COUNTER_H);
   uint16_t stepsTaken = ((uint16_t) temp) << 8;
-  PRINTF("first set steps take = %x \r\n",stepsTaken);
+  //PRINTF("first set steps take = %x \r\n",stepsTaken);
   set_slave_address(GYRO_SLAVE_ADDRESS);
   temp = read_reg(LSM6DS3_ACC_GYRO_STEP_COUNTER_L);
   stepsTaken |= temp;
-  PRINTF("second set steps = %x \r\n",stepsTaken);
+  
+  temp = 0;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp = read_reg(LSM6DS3_ACC_GYRO_FUNC_SRC);
+  if(temp & 0x10) {
+    PRINTF("Step detected!\r\n");
+  }
+  //PRINTF("second set steps = %x \r\n",stepsTaken);
   return stepsTaken;
 }
+
+
+void read_raw_gyro(uint16_t *x, uint16_t *y, uint16_t *z) {
+  uint8_t temp_l, temp_h;
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTX_L_G);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTX_H_G);
+
+  *x = (temp_h << 8) + temp_l;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTY_L_G);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTY_H_G);
+
+  *y = (temp_h << 8) + temp_l;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTZ_L_G);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTZ_H_G);
+
+  *z = (temp_h << 8) + temp_l;
+
+  return;
+}
+
+
+void read_raw_accel(uint16_t *x, uint16_t *y, uint16_t *z) {
+  uint8_t temp_l, temp_h;
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTX_L_XL);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTX_H_XL);
+
+  *x = (temp_h << 8) + temp_l;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTY_L_XL);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTY_H_XL);
+
+  *y = (temp_h << 8) + temp_l;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTZ_L_XL);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTZ_H_XL);
+
+  *z = (temp_h << 8) + temp_l;
+
+  return;
+}
+
+
 

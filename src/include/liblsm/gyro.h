@@ -37,9 +37,14 @@ typedef struct {
   int z;
 } gyro_t;
 
+void gyro_init_pedom_int(void);
 void gyro_init_tap_int(void);
+void gyro_init_tilt_int(void);
 void gyro_init_pedom_poll(void);
+void gyro_init_raw(void);
 uint16_t read_pedometer_steps(void);
+void read_raw_gyro(uint16_t *, uint16_t *, uint16_t *);
+void read_raw_accel(uint16_t *, uint16_t *, uint16_t *);
 
 
 #endif /*GYRO_H__*/

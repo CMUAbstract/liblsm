@@ -144,6 +144,7 @@ typedef enum
 #define LSM6DS3_ACC_GYRO_CONFIG_TILT_ACOS             0x11
 #define LSM6DS3_ACC_GYRO_CONFIG_TILT_WTIME            0x12
 #define LSM6DS3_ACC_GYRO_SM_STEP_THS                  0x13
+#define LSM6DS3_ACC_GYRO_PEDO_DEB                     0x14
 #define LSM6DS3_ACC_GYRO_MAG_SI_XX                    0x24
 #define LSM6DS3_ACC_GYRO_MAG_SI_XY                    0x25
 #define LSM6DS3_ACC_GYRO_MAG_SI_XZ                    0x26
@@ -159,7 +160,6 @@ typedef enum
 #define LSM6DS3_ACC_GYRO_MAG_OFFY_H                   0x30
 #define LSM6DS3_ACC_GYRO_MAG_OFFZ_L                   0x31
 #define LSM6DS3_ACC_GYRO_MAG_OFFZ_H                   0x32
-
 /*******************************************************************************
 * Register      : TEST_PAGE
 * Address       : 0X00
