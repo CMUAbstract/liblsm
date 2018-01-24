@@ -42,9 +42,11 @@ void gyro_init_tap_int(void);
 void gyro_init_tilt_int(void);
 void gyro_init_pedom_poll(void);
 void gyro_init_raw(void);
+void gyro_init_tap_drdy(void);
 uint16_t read_pedometer_steps(void);
 void read_raw_gyro(uint16_t *, uint16_t *, uint16_t *);
 void read_raw_accel(uint16_t *, uint16_t *, uint16_t *);
+uint8_t read_drdy_status(void);
 
 
 #endif /*GYRO_H__*/
