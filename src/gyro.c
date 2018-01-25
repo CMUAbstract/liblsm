@@ -158,6 +158,120 @@ void gyro_init_pedom_poll(void) {
   return;
 }
 
+void gyro_init_fifo_tap(void) {
+
+  // Set slave address //
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+
+  uint8_t temp = read_reg(GYRO_ID_ADDRESS);
+  if(temp != GYRO_ID_RETURN) {
+    PRINTF("Error initializing gyro!\r\n");
+    while(1);
+  }
+
+  uint8_t dataToWrite = 0;
+
+  // Set up the acceleromter
+  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_200Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_4g;
+  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
+
+  // Set up the gyro
+  dataToWrite = 0;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_245dps;
+  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_104Hz;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  uint8_t dataRead = read_reg(LSM6DS3_ACC_GYRO_CTRL1_XL);
+
+  //PRINTF("Wrote %x, read %x \r\n", dataToWrite, dataRead);
+
+  // May need to add in write to ODR bits here... maybe not though
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x0E);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_TAP_THS_6D, 0x01);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_INT_DUR2, 0x7F);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_WAKE_UP_THS, 0x80);
+
+#if 0
+  // Direct tap out to INT1
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_MD1_CFG, 0x48);
+#endif
+
+#if 1
+  // Direct tap out to INT2
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_MD2_CFG, 0x48);
+#endif
+
+  // FIFO configuration
+  uint8_t tempFIFO_CTRL1 = 0;
+  uint8_t tempFIFO_CTRL2 = 0;
+  uint8_t tempFIFO_CTRL3 = 0;
+  uint8_t tempFIFO_CTRL4 = 0;
+  uint8_t tempFIFO_CTRL5 = 0;
+  // Set bits [7:0] of threshold level
+  tempFIFO_CTRL1 = 0x20;
+  // Set bits [12:0] of threshold level and pedom-fifo settings
+  tempFIFO_CTRL2 = 0x0;
+  // Set FIFO decimation settings for gyro and accel
+  tempFIFO_CTRL3 = 0x1;
+  // Set FIFO decimation settings for sensorhub and temp sensor
+  tempFIFO_CTRL4 = 0x0;
+  // Set FIFO ODR ([6:3]) and operating mode ([2:0])
+  tempFIFO_CTRL5 = 0x19;
+  // Write all the settings at once
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL1, tempFIFO_CTRL1);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL2, tempFIFO_CTRL2);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL3, tempFIFO_CTRL3);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL4, tempFIFO_CTRL4);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5, tempFIFO_CTRL5);
+
+#if 0
+  // Send FIFO threshold interrupt to INT2
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_INT2_CTRL, 0x8);
+#endif
+
+#if 1
+  // Send FIFO threshold interrupt to INT2
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_INT1_CTRL, 0x8);
+#endif
+
+  // Set block data update bit so we can read the fifo level and hope we're not
+  // squashing any important settings in the process...
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL3_C, 0x44);
+
+  return;
+
+}
+
 void gyro_init_tap_drdy(void) {
 
   // Set slave address //
@@ -174,9 +288,9 @@ void gyro_init_tap_drdy(void) {
   uint8_t dataToWrite = 0;
 
   // Set up the acceleromter
-  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_200Hz;
   dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
-  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_26Hz;
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
@@ -184,7 +298,7 @@ void gyro_init_tap_drdy(void) {
   // Set up the gyro
   dataToWrite = 0;
   dataToWrite = LSM6DS3_ACC_GYRO_FS_G_245dps;
-  dataToWrite = LSM6DS3_ACC_GYRO_ODR_G_104Hz;
+  dataToWrite = LSM6DS3_ACC_GYRO_ODR_G_26Hz;
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
@@ -199,8 +313,8 @@ void gyro_init_tap_drdy(void) {
   write_reg(LSM6DS3_ACC_GYRO_INT2_CTRL, 0x01);
 
   // Mask off drdy signal?
-  //set_slave_address(GYRO_SLAVE_ADDRESS);
-  //write_reg(LSM6DS3_ACC_GYRO_CTRL4_C, 0x8);
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL4_C, 0x8);
 
   // May need to add in write to ODR bits here... maybe not though
   set_slave_address(GYRO_SLAVE_ADDRESS);
@@ -430,5 +544,80 @@ uint8_t read_drdy_status(void) {
   temp = read_reg(LSM6DS3_ACC_GYRO_STATUS_REG);
   temp = temp & 0x1;
   return temp;
+}
+
+// Note, this will return values from different sensors depending on how you
+// have your FIFO configured. Check out the FIFO_PATTERN register to figure out
+// exactly what you'll get.
+void read_fifo_trio(uint16_t *x, uint16_t *y, uint16_t *z) {
+  uint8_t temp_l, temp_h; 
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_L);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_H);
+
+  *x = (temp_h << 8) + temp_l;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_L);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_H);
+
+  *y = (temp_h << 8) + temp_l;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_L);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_H);
+
+  *z = (temp_h << 8) + temp_l;
+
+  return;
+}
+
+uint16_t read_fifo_val(void) {
+  uint8_t temp_l, temp_h; 
+  uint16_t x;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_L);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_H);
+
+  x = (temp_h << 8) + temp_l;
+
+  return x;
+}
+
+// Returns the lower 8 bits of how many samples are left in the FIFO
+// We're being lazy and not digging the upper bits out of STATUS2
+uint8_t read_fifo_lvl(void) {
+  uint8_t temp;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS1);
+  return temp;
+}
+
+void fifo_clear(void) {
+  uint16_t x;
+  uint8_t temp = 0, temp2 = 0;
+  while(!temp) {
+    set_slave_address(GYRO_SLAVE_ADDRESS);
+    temp = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS2);
+    // Check fifo empty flag
+    temp = temp & 0x10;
+    x = read_fifo_val();
+  }
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS1);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp2 = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS2);
+
+  printf("status2 = %x status1 = %x\r\n",temp2,temp);
+  return;
 }
 

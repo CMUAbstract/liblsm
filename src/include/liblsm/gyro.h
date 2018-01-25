@@ -43,10 +43,18 @@ void gyro_init_tilt_int(void);
 void gyro_init_pedom_poll(void);
 void gyro_init_raw(void);
 void gyro_init_tap_drdy(void);
+void gyro_init_fifo_tap(void);
+
+
 uint16_t read_pedometer_steps(void);
 void read_raw_gyro(uint16_t *, uint16_t *, uint16_t *);
 void read_raw_accel(uint16_t *, uint16_t *, uint16_t *);
 uint8_t read_drdy_status(void);
+uint8_t read_fifo_lvl(void);
+uint16_t read_fifo_val(void);
+void fifo_clear(void);
+
+
 
 
 #endif /*GYRO_H__*/
