@@ -56,6 +56,7 @@ uint8_t read_fifo_thr(void);
 void fifo_clear(void);
 void lsm_reset(void);
 void lsm_reboot(void);
+uint8_t read_tap_src(void);
 
 
 #endif /*GYRO_H__*/

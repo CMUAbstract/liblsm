@@ -196,8 +196,8 @@ void gyro_init_fifo_tap(void) {
 
   // May need to add in write to ODR bits here... maybe not though
   set_slave_address(GYRO_SLAVE_ADDRESS);
-  //write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x0F);
-  write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x0E);
+  write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x0F);
+  //write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x0E);
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_TAP_THS_6D, 0x01);
@@ -260,6 +260,10 @@ void gyro_init_fifo_tap(void) {
   
   set_slave_address(GYRO_SLAVE_ADDRESS);
   dataRead = read_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5);
+ 
+  // Stop on Fth enabled
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL4_C, 0x1);
 
   PRINTF("to ctrl5: %x, read %x \r\n",tempFIFO_CTRL5, dataRead);
 #if 0
@@ -615,19 +619,13 @@ uint8_t read_fifo_thr(void) {
   return temp;
 }
 
-uint8_t read_int1(void) {
+uint8_t read_tap_src(void) {
   uint8_t temp;
   set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS2);
+  temp = read_reg(LSM6DS3_ACC_GYRO_TAP_SRC);
   return temp;
 }
 
-uint8_t read_int2(void) {
-  uint8_t temp;
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS2);
-  return temp;
-}
 void fifo_clear(void) {
   uint16_t x;
   uint8_t temp = 0, temp2 = 0;
