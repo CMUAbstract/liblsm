@@ -192,10 +192,11 @@ void gyro_init_fifo_tap(void) {
   set_slave_address(GYRO_SLAVE_ADDRESS);
   uint8_t dataRead = read_reg(LSM6DS3_ACC_GYRO_CTRL1_XL);
 
-  //PRINTF("Wrote %x, read %x \r\n", dataToWrite, dataRead);
+  PRINTF("Wrote %x, read %x \r\n", dataToWrite, dataRead);
 
   // May need to add in write to ODR bits here... maybe not though
   set_slave_address(GYRO_SLAVE_ADDRESS);
+  //write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x0F);
   write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x0E);
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
@@ -218,6 +219,12 @@ void gyro_init_fifo_tap(void) {
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_MD2_CFG, 0x48);
 #endif
+  // Set block data update bit so we can read the fifo level and hope we're not
+  // squashing any important settings in the process...
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL3_C, 0x44);
+
+
 
   // FIFO configuration
   uint8_t tempFIFO_CTRL1 = 0;
@@ -226,7 +233,7 @@ void gyro_init_fifo_tap(void) {
   uint8_t tempFIFO_CTRL4 = 0;
   uint8_t tempFIFO_CTRL5 = 0;
   // Set bits [7:0] of threshold level
-  tempFIFO_CTRL1 = 0x20;
+  tempFIFO_CTRL1 = 0x30;
   // Set bits [12:0] of threshold level and pedom-fifo settings
   tempFIFO_CTRL2 = 0x0;
   // Set FIFO decimation settings for gyro and accel
@@ -234,7 +241,7 @@ void gyro_init_fifo_tap(void) {
   // Set FIFO decimation settings for sensorhub and temp sensor
   tempFIFO_CTRL4 = 0x0;
   // Set FIFO ODR ([6:3]) and operating mode ([2:0])
-  tempFIFO_CTRL5 = 0x19;
+  tempFIFO_CTRL5 = 0x21;
   // Write all the settings at once
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL1, tempFIFO_CTRL1);
@@ -250,7 +257,11 @@ void gyro_init_fifo_tap(void) {
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5, tempFIFO_CTRL5);
+  
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  dataRead = read_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5);
 
+  PRINTF("to ctrl5: %x, read %x \r\n",tempFIFO_CTRL5, dataRead);
 #if 0
   // Send FIFO threshold interrupt to INT2
   set_slave_address(GYRO_SLAVE_ADDRESS);
@@ -258,15 +269,10 @@ void gyro_init_fifo_tap(void) {
 #endif
 
 #if 1
-  // Send FIFO threshold interrupt to INT2
+  // Send FIFO threshold interrupt to INT1
   set_slave_address(GYRO_SLAVE_ADDRESS);
-  write_reg(LSM6DS3_ACC_GYRO_INT1_CTRL, 0x8);
+  write_reg(LSM6DS3_ACC_GYRO_INT1_CTRL, 0x38);
 #endif
-
-  // Set block data update bit so we can read the fifo level and hope we're not
-  // squashing any important settings in the process...
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-  write_reg(LSM6DS3_ACC_GYRO_CTRL3_C, 0x44);
 
   return;
 
@@ -601,6 +607,27 @@ uint8_t read_fifo_lvl(void) {
   return temp;
 }
 
+uint8_t read_fifo_thr(void) {
+  uint8_t temp;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS2);
+  
+  return temp;
+}
+
+uint8_t read_int1(void) {
+  uint8_t temp;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS2);
+  return temp;
+}
+
+uint8_t read_int2(void) {
+  uint8_t temp;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS2);
+  return temp;
+}
 void fifo_clear(void) {
   uint16_t x;
   uint8_t temp = 0, temp2 = 0;
@@ -608,6 +635,7 @@ void fifo_clear(void) {
     set_slave_address(GYRO_SLAVE_ADDRESS);
     temp = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS2);
     // Check fifo empty flag
+    //printf("temp = %u \r\n",temp);
     temp = temp & 0x10;
     x = read_fifo_val();
   }
@@ -618,6 +646,41 @@ void fifo_clear(void) {
   temp2 = read_reg(LSM6DS3_ACC_GYRO_FIFO_STATUS2);
 
   printf("status2 = %x status1 = %x\r\n",temp2,temp);
+  return;
+}
+
+void lsm_reset(void) {
+  //gyro in power down
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, 0x0);
+  //accel in high performance
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL6_C, 0x0);
+  //sw_reset
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL3_C, 0x1);
+  //Wait until no longer in SW_RESET
+  uint8_t temp = 1;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  while(temp) {
+    temp = read_reg(LSM6DS3_ACC_GYRO_CTRL3_C);
+    temp = temp & 0x1;
+    PRINTF("temp = %u \r\n",temp);
+  }
+  return;
+}
+
+void lsm_reboot(void) {
+  // gyro in power down
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, 0x0);
+  // accel in high performance
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL6_C, 0x0);
+  // reboot bit
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL3_C, 0x80);
+  // Wait 20ms after this function!
   return;
 }
 

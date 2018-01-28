@@ -52,9 +52,10 @@ void read_raw_accel(uint16_t *, uint16_t *, uint16_t *);
 uint8_t read_drdy_status(void);
 uint8_t read_fifo_lvl(void);
 uint16_t read_fifo_val(void);
+uint8_t read_fifo_thr(void);
 void fifo_clear(void);
-
-
+void lsm_reset(void);
+void lsm_reboot(void);
 
 
 #endif /*GYRO_H__*/
