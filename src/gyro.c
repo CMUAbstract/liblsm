@@ -682,3 +682,15 @@ void lsm_reboot(void) {
   return;
 }
 
+void fifo_reset(void) {
+  // Set FIFO ODR ([6:3]) and op mode to bypass
+  uint8_t tempFIFO_CTRL5 = 0x20;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5,tempFIFO_CTRL5 );
+ 
+  // flip mode back to fifo
+  tempFIFO_CTRL5 = 0x21;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5,tempFIFO_CTRL5 );
+  return;
+}
