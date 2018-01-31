@@ -233,7 +233,7 @@ void gyro_init_fifo_tap(void) {
   uint8_t tempFIFO_CTRL4 = 0;
   uint8_t tempFIFO_CTRL5 = 0;
   // Set bits [7:0] of threshold level
-  tempFIFO_CTRL1 = 0x30;
+  tempFIFO_CTRL1 = 0x40;
   // Set bits [12:0] of threshold level and pedom-fifo settings
   tempFIFO_CTRL2 = 0x0;
   // Set FIFO decimation settings for gyro and accel
