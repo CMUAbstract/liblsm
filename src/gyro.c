@@ -192,7 +192,7 @@ void gyro_init_fifo_tap(void) {
   set_slave_address(GYRO_SLAVE_ADDRESS);
   uint8_t dataRead = read_reg(LSM6DS3_ACC_GYRO_CTRL1_XL);
 
-  PRINTF("Wrote %x, read %x \r\n", dataToWrite, dataRead);
+  //LOG3("Wrote %x, read %x \r\n", dataToWrite, dataRead);
 
   // May need to add in write to ODR bits here... maybe not though
   set_slave_address(GYRO_SLAVE_ADDRESS);
@@ -257,15 +257,15 @@ void gyro_init_fifo_tap(void) {
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5, tempFIFO_CTRL5);
-  
+
   set_slave_address(GYRO_SLAVE_ADDRESS);
   dataRead = read_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5);
- 
+
   // Stop on Fth enabled
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL4_C, 0x1);
 
-  PRINTF("to ctrl5: %x, read %x \r\n",tempFIFO_CTRL5, dataRead);
+  //LOG3("to ctrl5: %x, read %x \r\n",tempFIFO_CTRL5, dataRead);
 #if 0
   // Send FIFO threshold interrupt to INT2
   set_slave_address(GYRO_SLAVE_ADDRESS);
@@ -663,7 +663,7 @@ void lsm_reset(void) {
   while(temp) {
     temp = read_reg(LSM6DS3_ACC_GYRO_CTRL3_C);
     temp = temp & 0x1;
-    PRINTF("temp = %u \r\n",temp);
+    //PRINTF("temp = %u \r\n",temp);
   }
   return;
 }
