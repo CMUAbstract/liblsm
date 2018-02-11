@@ -233,7 +233,7 @@ void gyro_init_fifo_tap(void) {
   uint8_t tempFIFO_CTRL4 = 0;
   uint8_t tempFIFO_CTRL5 = 0;
   // Set bits [7:0] of threshold level
-  tempFIFO_CTRL1 = 0xA0;
+  tempFIFO_CTRL1 = 0x20;
   // Set bits [12:0] of threshold level and pedom-fifo settings
   tempFIFO_CTRL2 = 0x0;
   // Set FIFO decimation settings for gyro and accel
@@ -687,7 +687,7 @@ void fifo_reset(void) {
   uint8_t tempFIFO_CTRL5 = 0x20;
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5,tempFIFO_CTRL5 );
- 
+
   // flip mode back to fifo
   tempFIFO_CTRL5 = 0x21;
   set_slave_address(GYRO_SLAVE_ADDRESS);
