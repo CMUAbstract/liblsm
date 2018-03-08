@@ -233,7 +233,7 @@ void gyro_init_fifo_tap(void) {
   uint8_t tempFIFO_CTRL4 = 0;
   uint8_t tempFIFO_CTRL5 = 0;
   // Set bits [7:0] of threshold level
-  tempFIFO_CTRL1 = 0x20;
+  tempFIFO_CTRL1 = 0x60;
   // Set bits [12:0] of threshold level and pedom-fifo settings
   tempFIFO_CTRL2 = 0x0;
   // Set FIFO decimation settings for gyro and accel
@@ -401,7 +401,6 @@ void gyro_init_tap_int(void) {
 }
 
 void gyro_init_raw(void) {
-
   // Set slave address //
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
@@ -412,7 +411,6 @@ void gyro_init_raw(void) {
     PRINTF("Error initializing gyro!\r\n");
     while(1);
   }
-
   uint8_t dataToWrite = 0;
 
   // Set up the accelerometer
