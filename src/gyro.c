@@ -35,7 +35,6 @@ void write_reg(uint8_t reg,uint8_t val) {
 
 uint8_t read_reg(uint8_t reg) {
   while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
-
   // Query gyro reg
   UCB0CTLW0 |= UCTR | UCTXSTT; // transmit mode and start
   while(!(UCB0IFG & UCTXIFG)); // wait until txbuf is empty
@@ -68,6 +67,7 @@ void set_slave_address(uint8_t addr) {
   UCB0CTLW0 &= ~UCSWRST; // enable
   while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
 }
+
 void gyro_init_pedom_int(void) {
 
   // Set slave address //
@@ -159,12 +159,10 @@ void gyro_init_pedom_poll(void) {
 }
 
 void gyro_init_fifo_tap(void) {
-
   // Set slave address //
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
   UCB0CTLW0 &= ~UCSWRST; // enable
-
   uint8_t temp = read_reg(GYRO_ID_ADDRESS);
   if(temp != GYRO_ID_RETURN) {
     PRINTF("Error initializing gyro!\r\n");
@@ -233,7 +231,7 @@ void gyro_init_fifo_tap(void) {
   uint8_t tempFIFO_CTRL4 = 0;
   uint8_t tempFIFO_CTRL5 = 0;
   // Set bits [7:0] of threshold level
-  tempFIFO_CTRL1 = 0x60;
+  tempFIFO_CTRL1 = 0x15;
   // Set bits [12:0] of threshold level and pedom-fifo settings
   tempFIFO_CTRL2 = 0x0;
   // Set FIFO decimation settings for gyro and accel
@@ -360,7 +358,7 @@ void gyro_init_tap_int(void) {
   uint8_t dataToWrite = 0;
 
   // Set up the acceleromter
-  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_200Hz;
+  //dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_200Hz;
   dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_2g;
   dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_416Hz;
 
@@ -369,8 +367,8 @@ void gyro_init_tap_int(void) {
 
   // Set up the gyro
   dataToWrite = 0;
-  dataToWrite = LSM6DS3_ACC_GYRO_FS_G_245dps;
-  dataToWrite = LSM6DS3_ACC_GYRO_ODR_G_104Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_245dps;
+  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_104Hz;
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
@@ -380,7 +378,7 @@ void gyro_init_tap_int(void) {
 
   uint8_t dataRead = read_reg(LSM6DS3_ACC_GYRO_CTRL1_XL);
 
-  PRINTF("Wrote %x, read %x \r\n", dataToWrite, dataRead);
+  //PRINTF("Wrote %x, read %x \r\n", dataToWrite, dataRead);
 
   // May need to add in write to ODR bits here... maybe not though
   set_slave_address(GYRO_SLAVE_ADDRESS);
@@ -442,6 +440,9 @@ void gyro_init_tilt_int(void) {
   if(temp != GYRO_ID_RETURN) {
     PRINTF("Error initializing gyro!\r\n");
     while(1);
+  }
+  else {
+    PRINTF("got id! \r\n");
   }
 
   uint8_t dataToWrite = 0;
