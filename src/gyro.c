@@ -60,6 +60,34 @@ uint8_t read_reg(uint8_t reg) {
 }
 
 
+void dump_fifo(uint8_t *output, uint16_t dump_level) {
+  // restart transmit
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+  while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
+  // Query gyro reg
+  UCB0CTLW0 |= UCTR | UCTXSTT; // transmit mode and start
+  while(!(UCB0IFG & UCTXIFG)); // wait until txbuf is empty
+
+  UCB0TXBUF = LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_L; // fill txbuf with reg address
+
+  while(!(UCB0IFG & UCTXIFG)); // wait until txbuf is empty
+
+  UCB0CTLW0 &= ~UCTR; // receive mode
+  UCB0CTLW0 |= UCTXSTT; // repeated start
+
+  // wait for addr transmission to finish, data transfer to start
+  while(UCB0CTLW0 & UCTXSTT);
+  for(uint16_t i = 0; i < dump_level; i++) {
+    while(!(UCB0IFG & UCRXIFG)); // wait until txbuf is empty
+    *(output + i) = UCB0RXBUF; // read out of rx buf
+  }
+  UCB0CTLW0 |= UCTXSTP;
+
+  while (UCB0STATW & UCBBUSY); // hang out until bus is quiet
+}
+
 void set_slave_address(uint8_t addr) {
   // Set slave address //
   UCB0CTLW0 |= UCSWRST; // disable
