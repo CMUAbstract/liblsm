@@ -88,6 +88,52 @@ void dump_fifo(uint8_t *output, uint16_t dump_level) {
   while (UCB0STATW & UCBBUSY); // hang out until bus is quiet
 }
 
+void dump_fifo_high(uint8_t *output, uint16_t dump_level) {
+  // restart transmit
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+  while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
+  // Query gyro reg
+  UCB0CTLW0 |= UCTR | UCTXSTT; // transmit mode and start
+  while(!(UCB0IFG & UCTXIFG)); // wait until txbuf is empty
+
+  UCB0TXBUF = LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_H; // fill txbuf with reg address
+
+  while(!(UCB0IFG & UCTXIFG)); // wait until txbuf is empty
+
+  UCB0CTLW0 &= ~UCTR; // receive mode
+  UCB0CTLW0 |= UCTXSTT; // repeated start
+
+  // wait for addr transmission to finish, data transfer to start
+  while(UCB0CTLW0 & UCTXSTT);
+  for(uint16_t i = 0; i < dump_level; i++) {
+    while(!(UCB0IFG & UCRXIFG)); // wait until txbuf is empty
+    *(output + i) = UCB0RXBUF; // read out of rx buf
+  }
+  UCB0CTLW0 |= UCTXSTP;
+
+  while (UCB0STATW & UCBBUSY); // hang out until bus is quiet
+}
+
+void dump_fifos(uint8_t *output, uint8_t *output1, uint16_t dump_level) {
+  printf("Here!\r\n");
+  // restart transmit
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+  for(uint16_t i = 0; i < dump_level; i++) {
+    set_slave_address(GYRO_SLAVE_ADDRESS);
+    *(output + i) = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_L);
+    set_slave_address(GYRO_SLAVE_ADDRESS);
+    *(output1 + i) = read_reg(LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_H);
+    uint16_t temp;
+    temp = (output1[i] << 8) + output[i];
+    printf("%i: %i\r\n",i,temp);
+    //__delay_cycles(4000);
+  }
+}
+
 void set_slave_address(uint8_t addr) {
   // Set slave address //
   UCB0CTLW0 |= UCSWRST; // disable
@@ -248,7 +294,8 @@ void gyro_init_fifo_tap(void) {
   // Set block data update bit so we can read the fifo level and hope we're not
   // squashing any important settings in the process...
   set_slave_address(GYRO_SLAVE_ADDRESS);
-  write_reg(LSM6DS3_ACC_GYRO_CTRL3_C, 0x44);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL3_C, 0x40);
+  //write_reg(LSM6DS3_ACC_GYRO_CTRL3_C, 0x44);
 
 
 
@@ -259,7 +306,7 @@ void gyro_init_fifo_tap(void) {
   uint8_t tempFIFO_CTRL4 = 0;
   uint8_t tempFIFO_CTRL5 = 0;
   // Set bits [7:0] of threshold level
-  tempFIFO_CTRL1 = 0x15;
+  tempFIFO_CTRL1 = FIFO_THR;
   // Set bits [12:0] of threshold level and pedom-fifo settings
   tempFIFO_CTRL2 = 0x0;
   // Set FIFO decimation settings for gyro and accel
