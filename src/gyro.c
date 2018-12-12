@@ -242,21 +242,18 @@ void gyro_init_fifo_tap(void) {
     PRINTF("Error initializing gyro!\r\n");
     while(1);
   }
-
   uint8_t dataToWrite = 0;
 
   // Set up the acceleromter
   dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_200Hz;
   dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_4g;
-  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_833Hz;
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
 
-  // Set up the gyro
+  // Disable the gyro
   dataToWrite = 0;
-  dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_245dps;
-  dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_104Hz;
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
@@ -264,12 +261,9 @@ void gyro_init_fifo_tap(void) {
   set_slave_address(GYRO_SLAVE_ADDRESS);
   uint8_t dataRead = read_reg(LSM6DS3_ACC_GYRO_CTRL1_XL);
 
-  //LOG3("Wrote %x, read %x \r\n", dataToWrite, dataRead);
-
   // May need to add in write to ODR bits here... maybe not though
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x0F);
-  //write_reg(LSM6DS3_ACC_GYRO_TAP_CFG1, 0x0E);
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_TAP_THS_6D, 0x01);
@@ -732,19 +726,29 @@ void lsm_reset(void) {
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL3_C, 0x1);
   //Wait until no longer in SW_RESET
+
   uint8_t temp = 1;
-  set_slave_address(GYRO_SLAVE_ADDRESS);
   while(temp) {
+    set_slave_address(GYRO_SLAVE_ADDRESS);
     temp = read_reg(LSM6DS3_ACC_GYRO_CTRL3_C);
     temp = temp & 0x1;
-    //PRINTF("temp = %u \r\n",temp);
+  }
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp = read_reg(GYRO_ID_ADDRESS);
+  if(temp != GYRO_ID_RETURN) {
+    PRINTF("Error initializing gyro!\r\n");
+    while(1);
   }
   return;
 }
 
 void lsm_reboot(void) {
   // gyro in power down
-  set_slave_address(GYRO_SLAVE_ADDRESS);
+  //set_slave_address(GYRO_SLAVE_ADDRESS);
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+  uint8_t temp = read_reg(GYRO_ID_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, 0x0);
   // accel in high performance
   set_slave_address(GYRO_SLAVE_ADDRESS);
