@@ -63,6 +63,7 @@ void dump_fifo(uint8_t *output, uint16_t dump_level);
 void dump_fifo_high(uint8_t *output, uint16_t dump_level);
 void dump_fifos(uint8_t *output, uint8_t *output1, uint16_t dump_level);
 
-#define FIFO_THR 0x10
+// FIFO_THR % 3 = 1 to get this to work!!!
+#define FIFO_THR 0xA
 
 #endif /*GYRO_H__*/
