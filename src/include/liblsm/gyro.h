@@ -1,5 +1,6 @@
 #ifndef __GYRO_H__
 #define __GYRO_H__
+#include "lsm6ds3.h"
 
 #define GYRO_SLAVE_ADDRESS 0x6B
 #define GYRO_ID_ADDRESS 0x0F /*WhoAmI (ID) register*/
@@ -42,6 +43,7 @@ void gyro_init_tap_int(void);
 void gyro_init_tilt_int(void);
 void gyro_init_pedom_poll(void);
 void gyro_init_raw(void);
+void gyro_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t);
 void gyro_init_tap_drdy(void);
 void gyro_init_fifo_tap(void);
 
