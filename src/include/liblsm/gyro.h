@@ -59,12 +59,12 @@ void read_fifo_trio(uint16_t *x, uint16_t *y, uint16_t *z);
 void fifo_clear(void);
 void lsm_reset(void);
 void lsm_reboot(void);
+void lsm_disable(void);
 uint8_t read_tap_src(void);
 void fifo_reset(void);
 void dump_fifo(uint8_t *output, uint16_t dump_level);
 void dump_fifo_high(uint8_t *output, uint16_t dump_level);
 void dump_fifos(uint8_t *output, uint8_t *output1, uint16_t dump_level);
-
 // FIFO_THR % 3 = 1 to get this to work!!!
 #define FIFO_THR 0xA
 

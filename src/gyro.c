@@ -804,3 +804,10 @@ void fifo_reset(void) {
   write_reg(LSM6DS3_ACC_GYRO_FIFO_CTRL5,tempFIFO_CTRL5 );
   return;
 }
+
+void lsm_disable(void) {
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL,0x0);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL2_G,0x0);
+  return;
+}
