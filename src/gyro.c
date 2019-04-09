@@ -531,6 +531,50 @@ void gyro_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
   return;
 }
 
+void gyro_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
+  // Set slave address //
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+
+  uint8_t temp = read_reg(GYRO_ID_ADDRESS);
+  if(temp != GYRO_ID_RETURN) {
+    PRINTF("Error initializing gyro!\r\n");
+    while(1);
+  }
+
+  if(!highperf) {
+    // Change CTRL6 and CTRL7 to low power
+    set_slave_address(GYRO_SLAVE_ADDRESS);
+    // Set bit 4 of CTRL6 to 1
+    write_reg(LSM6DS3_ACC_GYRO_CTRL6_C, 0x10);
+    set_slave_address(GYRO_SLAVE_ADDRESS);
+    // Set bit 4 of CTRL6 to 1
+    write_reg(LSM6DS3_ACC_GYRO_CTRL7_C, 0x80);
+  }
+
+  uint8_t dataToWrite = 0;
+  // Set up the accelerometer
+  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
+  dataToWrite |= rate;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
+
+  // Set up the gyro
+  dataToWrite = 0;
+  dataToWrite = LSM6DS3_ACC_GYRO_FS_G_245dps;
+  dataToWrite = rate;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
+
+  return;
+}
+
+
+
 void gyro_init_tilt_int(void) {
   // Set slave address //
   UCB0CTLW0 |= UCSWRST; // disable
