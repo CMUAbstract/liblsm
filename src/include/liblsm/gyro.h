@@ -2,6 +2,7 @@
 #define __GYRO_H__
 #include "lsm6ds3.h"
 #include <stdbool.h>
+#include <libpacarana/pacarana.h>
 #define GYRO_SLAVE_ADDRESS 0x6B
 #define GYRO_ID_ADDRESS 0x0F /*WhoAmI (ID) register*/
 #define GYRO_ID_RETURN 0x69 /*Value of WhoAmI register*/
@@ -44,9 +45,12 @@ void gyro_init_tilt_int(void);
 void gyro_init_pedom_poll(void);
 void gyro_init_raw(void);
 void gyro_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t);
-void gyro_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t, bool hm);
+DRIVER void gyro_init_data_rate_hm(__attribute__((annotate("periph_check"))) LSM6DS3_ACC_GYRO_ODR_XL_t, bool hm);
 void gyro_init_tap_drdy(void);
 void gyro_init_fifo_tap(void);
+void set_slave_address(uint8_t addr);
+
+
 
 
 uint16_t read_pedometer_steps(void);

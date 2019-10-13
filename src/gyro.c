@@ -2,12 +2,17 @@
 #include <stdio.h>
 
 #include <libmspware/driverlib.h>
+#include <libpacarana/pacarana.h>
+#include <libmspbuiltins/builtins.h>
+#include <libmsp/clock.h>
+#include <libmsp/watchdog.h>
 
 #include <libmsp/mem.h>
 #include <libio/console.h>
 
 #include "gyro.h"
 #include "lsm6ds3.h"
+//#define UCB0_IN_USE
 
 const unsigned int gyroBytes = 8;
 const unsigned int gyroIdBytes = 1;
@@ -16,6 +21,7 @@ volatile unsigned char gyroId = 0;
 
 
 void write_reg(uint8_t reg,uint8_t val) {
+#ifdef UCB0_IN_USE
   UCB0CTLW0 |= UCTR | UCTXSTT; // transmit mode and start
   while((UCB0CTLW0 & UCTXSTT)); // wait for addr transmission to finish
 
@@ -27,13 +33,27 @@ void write_reg(uint8_t reg,uint8_t val) {
 
   while(!(UCB0IFG & UCTXIFG)); // wait for txbuf to empty
   UCB0CTLW0 |= UCTXSTP; // stop
-
   while (UCB0STATW & UCBBUSY); // wait until bus is quiet
+#else
+  UCB1CTLW0 |= UCTR | UCTXSTT; // transmit mode and start
+  while((UCB1CTLW0 & UCTXSTT)); // wait for addr transmission to finish
 
+  while(!(UCB1IFG & UCTXIFG)); // wait for txbuf to empty
+  UCB1TXBUF = reg;
+
+  while(!(UCB1IFG & UCTXIFG)); // wait for txbuf to empty
+  UCB1TXBUF = val;
+
+  while(!(UCB1IFG & UCTXIFG)); // wait for txbuf to empty
+  UCB1CTLW0 |= UCTXSTP; // stop
+
+  while (UCB1STATW & UCBBUSY); // wait until bus is quiet
+#endif
   return;
 }
 
 uint8_t read_reg(uint8_t reg) {
+#ifdef UCB0_IN_USE
   while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
   // Query gyro reg
   UCB0CTLW0 |= UCTR | UCTXSTT; // transmit mode and start
@@ -55,7 +75,30 @@ uint8_t read_reg(uint8_t reg) {
   uint8_t val = UCB0RXBUF; // read out of rx buf
 
   while (UCB0STATW & UCBBUSY); // hang out until bus is quiet
+#else
+  while (UCB1STATW & UCBBUSY); // is bus busy? then wait!
+  // Query gyro reg
+  UCB1CTLW0 |= UCTR | UCTXSTT; // transmit mode and start
+  while(!(UCB1IFG & UCTXIFG)); // wait until txbuf is empty
 
+  UCB1TXBUF = reg; // fill txbuf with reg address
+
+  while(!(UCB1IFG & UCTXIFG)); // wait until txbuf is empty
+
+  UCB1CTLW0 &= ~UCTR; // receive mode
+  UCB1CTLW0 |= UCTXSTT; // repeated start
+
+  // wait for addr transmission to finish, data transfer to start
+  while(UCB1CTLW0 & UCTXSTT);
+
+  UCB1CTLW0 |= UCTXSTP; // stop
+
+  while(!(UCB1IFG & UCRXIFG)); // wait until txbuf is empty
+  uint8_t val = UCB1RXBUF; // read out of rx buf
+
+  while (UCB0STATW & UCBBUSY); // hang out until bus is quiet
+
+#endif
   return val;
 }
 
@@ -136,10 +179,17 @@ void dump_fifos(uint8_t *output, uint8_t *output1, uint16_t dump_level) {
 
 void set_slave_address(uint8_t addr) {
   // Set slave address //
+#ifdef UCB0_IN_USE
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = addr; // Set slave address
   UCB0CTLW0 &= ~UCSWRST; // enable
   while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
+#else
+  UCB1CTLW0 |= UCSWRST; // disable
+  UCB1I2CSA = addr; // Set slave address
+  UCB1CTLW0 &= ~UCSWRST; // enable
+  while (UCB1STATW & UCBBUSY); // is bus busy? then wait!
+#endif
 }
 
 void gyro_init_pedom_int(void) {
@@ -374,7 +424,7 @@ void gyro_init_tap_drdy(void) {
 
   // Set up the gyro
   dataToWrite = 0;
-  dataToWrite = LSM6DS3_ACC_GYRO_FS_G_245dps;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_245dps;
   dataToWrite = LSM6DS3_ACC_GYRO_ODR_G_26Hz;
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
@@ -501,13 +551,13 @@ void gyro_init_raw(void) {
 
 void gyro_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
   // Set slave address //
-  UCB0CTLW0 |= UCSWRST; // disable
-  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
-  UCB0CTLW0 &= ~UCSWRST; // enable
-
+  set_slave_address(GYRO_SLAVE_ADDRESS);
   uint8_t temp = read_reg(GYRO_ID_ADDRESS);
+  __delay_cycles(10);
   if(temp != GYRO_ID_RETURN) {
     PRINTF("Error initializing gyro!\r\n");
+    P1OUT |= BIT0;
+    P1DIR |= BIT0;
     while(1);
   }
   uint8_t dataToWrite = 0;
@@ -516,28 +566,46 @@ void gyro_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
   dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
   dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
   dataToWrite |= rate;
+  // dataToWrite |= 0;
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
-
+  P1OUT |= BIT2;
+  P1DIR |= BIT2;
+  P1OUT &= ~BIT2;
+ 
   // Set up the gyro
   dataToWrite = 0;
-  dataToWrite = LSM6DS3_ACC_GYRO_FS_G_245dps;
-  dataToWrite = rate;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_245dps;
+  dataToWrite |= rate;
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
+  P1OUT |= BIT2;
+  P1DIR |= BIT2;
+  P1OUT &= ~BIT2;
 
   return;
 }
 
-void gyro_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
+#define ACCEL_LP
+#define GYRO_LP
+DRIVER void gyro_init_data_rate_hm( __attribute__((annotate("periph_check"))) LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   // Set slave address //
+#if 0
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
   UCB0CTLW0 &= ~UCSWRST; // enable
+#endif
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  P1OUT |= BIT2;
+  P1DIR |= BIT2;
+  P1OUT &= ~BIT2;
 
   uint8_t temp = read_reg(GYRO_ID_ADDRESS);
+  P1OUT |= BIT2;
+  P1DIR |= BIT2;
+  P1OUT &= ~BIT2;
   if(temp != GYRO_ID_RETURN) {
     PRINTF("Error initializing gyro!\r\n");
     while(1);
@@ -545,12 +613,22 @@ void gyro_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
 
   if(!highperf) {
     // Change CTRL6 and CTRL7 to low power
+#ifdef ACCEL_LP
     set_slave_address(GYRO_SLAVE_ADDRESS);
     // Set bit 4 of CTRL6 to 1
     write_reg(LSM6DS3_ACC_GYRO_CTRL6_C, 0x10);
+    P1OUT |= BIT2;
+    P1DIR |= BIT2;
+    P1OUT &= ~BIT2;
+#endif
+#ifdef GYRO_LP
     set_slave_address(GYRO_SLAVE_ADDRESS);
     // Set bit 4 of CTRL6 to 1
     write_reg(LSM6DS3_ACC_GYRO_CTRL7_C, 0x80);
+    P1OUT |= BIT2;
+    P1DIR |= BIT2;
+    P1OUT &= ~BIT2;
+#endif
   }
 
   uint8_t dataToWrite = 0;
@@ -561,6 +639,9 @@ void gyro_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
+  P1OUT |= BIT2;
+  P1DIR |= BIT2;
+  P1OUT &= ~BIT2;
 
   // Set up the gyro
   dataToWrite = 0;
@@ -569,6 +650,9 @@ void gyro_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
 
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
+  P1OUT |= BIT2;
+  P1DIR |= BIT2;
+  P1OUT &= ~BIT2;
 
   return;
 }
@@ -809,10 +893,13 @@ void lsm_reset(void) {
     temp = read_reg(LSM6DS3_ACC_GYRO_CTRL3_C);
     temp = temp & 0x1;
   }
+  __delay_cycles(50);
   set_slave_address(GYRO_SLAVE_ADDRESS);
   temp = read_reg(GYRO_ID_ADDRESS);
   if(temp != GYRO_ID_RETURN) {
     PRINTF("Error initializing gyro!\r\n");
+    P1OUT |= BIT0;
+    P1DIR |= BIT0;
     while(1);
   }
   return;
