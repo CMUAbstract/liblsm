@@ -3,6 +3,7 @@ LIB = liblsm
 
 OBJECTS += \
   gyro.o \
+  accl.o
 
 
 DEPS += \
