@@ -116,6 +116,14 @@ void dump_fifo_high(uint8_t *output, uint16_t dump_level) {
   while (UCB0STATW & UCBBUSY); // hang out until bus is quiet
 }
 
+void set_slave_address(uint8_t addr) {
+  // Set slave address //
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = addr; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+  while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
+}
+
 void dump_fifos(uint8_t *output, uint8_t *output1, uint16_t dump_level) {
   printf("Here!\r\n");
   // restart transmit
@@ -134,13 +142,6 @@ void dump_fifos(uint8_t *output, uint8_t *output1, uint16_t dump_level) {
   }
 }
 
-void set_slave_address(uint8_t addr) {
-  // Set slave address //
-  UCB0CTLW0 |= UCSWRST; // disable
-  UCB0I2CSA = addr; // Set slave address
-  UCB0CTLW0 &= ~UCSWRST; // enable
-  while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
-}
 
 void gyro_init_pedom_int(void) {
 
