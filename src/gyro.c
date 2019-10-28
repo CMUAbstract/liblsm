@@ -501,6 +501,7 @@ void gyro_init_raw(void) {
 }
 
 void gyro_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
+  __delay_cycles(48000);
   // Set slave address //
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
