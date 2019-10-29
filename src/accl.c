@@ -57,6 +57,31 @@ void set_i2c_address(uint8_t addr) {
   while (UCB0STATW & UCBBUSY); // is bus busy? then wait!
 }
 
+void accelerometer_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
+  __delay_cycles(48000);
+  // Set slave address //
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = ACCL_I2C_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+  uint8_t temp = read_register(ACCL_ID_ADDRESS);
+  if(temp != ACCL_ID_RETURN) {
+    PRINTF("Error initializing gyro!\r\n");
+    while(1);
+  }
+  uint8_t dataToWrite = 0;
+  // Set up the accelerometer
+  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
+  dataToWrite |= rate;
+  // Change CTRL6 and CTRL7 to low power
+  set_slave_address(ACCL_I2C_ADDRESS);
+  // Set bit 4 of CTRL6 to 1
+  write_reg(LSM6DS3_ACC_GYRO_CTRL6_C, 0x10);
+
+  write_register(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
+  return;
+}
+
 void accelerometer_init() {
   // Set slave address //
   UCB0CTLW0 |= UCSWRST; // disable
@@ -79,12 +104,8 @@ void accelerometer_init() {
   set_slave_address(ACCL_I2C_ADDRESS);
   // Set bit 4 of CTRL6 to 1
   write_reg(LSM6DS3_ACC_GYRO_CTRL6_C, 0x10);
-  // Set bit 4 of CTRL6 to 1
-  write_reg(LSM6DS3_ACC_GYRO_CTRL7_C, 0x80);
 
   write_register(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);  
-  dataToWrite = 0x40;
-  write_register(LSM6DS3_ACC_GYRO_CTRL2_G,dataToWrite);
   //__delay_cycles(160000);
 }
 
@@ -100,26 +121,26 @@ void accelerometer_read(uint16_t *x, uint16_t *y, uint16_t *z) {
   }
 
   set_slave_address(ACCL_I2C_ADDRESS);
-  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTX_L_G);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTX_L_XL);
 
   set_slave_address(ACCL_I2C_ADDRESS);
-  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTX_H_G);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTX_H_XL);
 
   *x = (temp_h << 8) + temp_l;
 
   set_slave_address(ACCL_I2C_ADDRESS);
-  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTY_L_G);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTY_L_XL);
 
   set_slave_address(ACCL_I2C_ADDRESS);
-  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTY_H_G);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTY_H_XL);
 
   *y = (temp_h << 8) + temp_l;
 
   set_slave_address(ACCL_I2C_ADDRESS);
-  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTZ_L_G);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTZ_L_XL);
 
   set_slave_address(ACCL_I2C_ADDRESS);
-  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTZ_H_G);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTZ_H_XL);
 
   *z = (temp_h << 8) + temp_l;
 
