@@ -64,6 +64,8 @@ void fifo_clear(void);
 void lsm_reset(void);
 void lsm_reboot(void);
 void lsm_disable(void);
+void accel_odr_reenable(LSM6DS3_ACC_GYRO_ODR_XL_t rate);
+void lsm_odr_reenable(LSM6DS3_ACC_GYRO_ODR_XL_t rate);
 uint8_t read_tap_src(void);
 void fifo_reset(void);
 void dump_fifo(uint8_t *output, uint16_t dump_level);

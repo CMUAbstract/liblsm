@@ -4,7 +4,8 @@
 
 void accelerometer_init();
 void accelerometer_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate);
-void accelerometer_read();
+void dummy_accel_read(uint16_t *x, uint16_t *y, uint16_t *z);
+void accelerometer_read(uint16_t *x, uint16_t *y, uint16_t *z);
 void accelerometer_disable();
 
 #define ACCL_I2C_ADDRESS 0x6B

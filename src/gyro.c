@@ -6,6 +6,7 @@
 #include <libmsp/mem.h>
 #include <libio/console.h>
 
+#include <libmspbuiltins/builtins.h>
 #include "gyro.h"
 #include "lsm6ds3.h"
 
@@ -942,4 +943,30 @@ void lsm_disable(void) {
   write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL,0x0);
   write_reg(LSM6DS3_ACC_GYRO_CTRL2_G,0x0);
   return;
+}
+
+void lsm_odr_reenable(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
+  uint8_t dataToWrite = 0;
+  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
+  dataToWrite |= rate;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL,dataToWrite);
+  // Set up the gyro
+  dataToWrite = 0;
+  dataToWrite = LSM6DS3_ACC_GYRO_FS_G_245dps;
+  dataToWrite = rate;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
+  return;
+}
+
+void accel_odr_reenable(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
+  uint8_t dataToWrite = 0;
+  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
+  dataToWrite |= rate;
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL,dataToWrite);
 }
