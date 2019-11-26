@@ -1,12 +1,17 @@
 #ifndef __ACCL_H__
 #define __ACCL_H__
 #include "lsm6ds3.h"
+#include <stdbool.h>
 
 void accelerometer_init();
 void accelerometer_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate);
 void dummy_accel_read(uint16_t *x, uint16_t *y, uint16_t *z);
 void accelerometer_read(uint16_t *x, uint16_t *y, uint16_t *z);
 void accelerometer_disable();
+void accelerometer_read_profile();
+void accelerometer_write_profile();
+void accelerometer_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool
+highperf);
 
 #define ACCL_I2C_ADDRESS 0x6B
 #define ACCL_ID_ADDRESS 0x0F /*WhoAmI (ID) register*/

@@ -47,7 +47,7 @@ void gyro_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t);
 void gyro_only_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate);
 void gyro_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t, bool hm);
 void gyro_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf);
-void accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf);
+int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf);
 void gyro_init_tap_drdy(void);
 void gyro_init_fifo_tap(void);
 

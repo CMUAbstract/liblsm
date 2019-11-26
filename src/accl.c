@@ -83,6 +83,34 @@ void accelerometer_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
   return;
 }
 
+void accelerometer_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool
+highperf) {
+  __delay_cycles(48000);
+  // Set slave address //
+  UCB0CTLW0 |= UCSWRST; // disable
+  UCB0I2CSA = ACCL_I2C_ADDRESS; // Set slave address
+  UCB0CTLW0 &= ~UCSWRST; // enable
+  uint8_t temp = read_register(ACCL_ID_ADDRESS);
+  if(temp != ACCL_ID_RETURN) {
+    PRINTF("Error initializing gyro!\r\n");
+    while(1);
+  }
+  uint8_t dataToWrite = 0;
+  // Set up the accelerometer
+  dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
+  dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
+  dataToWrite |= rate;
+  if (!highperf) {
+  // Change CTRL6 and CTRL7 to low power
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  // Set bit 4 of CTRL6 to 1
+  write_register(LSM6DS3_ACC_GYRO_CTRL6_C, 0x10);
+  }
+
+  write_register(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
+  return;
+}
+
 void accelerometer_init() {
   // Set slave address //
   uint8_t temp;
@@ -200,3 +228,16 @@ void accelerometer_disable() {
   write_reg(LSM6DS3_ACC_GYRO_CTRL2_G,0x0);
   return;
 }
+
+void accelerometer_read_profile() {
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  uint8_t temp = read_register(ACCL_ID_ADDRESS);
+  return;
+}
+
+void accelerometer_write_profile() {
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL,0x0);
+  return;
+}
+

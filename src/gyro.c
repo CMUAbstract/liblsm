@@ -602,7 +602,7 @@ void gyro_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   return;
 }
 
-void accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
+int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   // Set slave address //
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
@@ -611,7 +611,8 @@ void accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   uint8_t temp = read_reg(GYRO_ID_ADDRESS);
   if(temp != GYRO_ID_RETURN) {
     PRINTF("Error initializing gyro!\r\n");
-    while(1);
+    return -1;
+    //while(1);
   }
 
   if(!highperf) {
@@ -630,7 +631,7 @@ void accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
 
-  return;
+  return 0;
 }
 
 void gyro_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
