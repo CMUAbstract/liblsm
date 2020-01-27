@@ -60,10 +60,12 @@ uint8_t read_fifo_lvl(void);
 uint16_t read_fifo_val(void);
 uint8_t read_fifo_thr(void);
 void read_fifo_trio(uint16_t *x, uint16_t *y, uint16_t *z);
+void gyroscope_read(int16_t *x, int16_t *y, int16_t *z);
+
 void fifo_clear(void);
 void lsm_reset(void);
 void lsm_reboot(void);
-void lsm_disable(void);
+void lsm_accel_disable(void);
 void accel_odr_reenable(LSM6DS3_ACC_GYRO_ODR_XL_t rate);
 void lsm_odr_reenable(LSM6DS3_ACC_GYRO_ODR_XL_t rate);
 uint8_t read_tap_src(void);
@@ -71,7 +73,10 @@ void fifo_reset(void);
 void dump_fifo(uint8_t *output, uint16_t dump_level);
 void dump_fifo_high(uint8_t *output, uint16_t dump_level);
 void dump_fifos(uint8_t *output, uint8_t *output1, uint16_t dump_level);
+void lsm_gyro_sleep(void);
+void lsm_gyro_reenable(void);
 // FIFO_THR % 3 = 1 to get this to work!!!
 #define FIFO_THR 0xA
+#define GYRO_MASK 0x2
 
 #endif /*GYRO_H__*/

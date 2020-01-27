@@ -126,7 +126,6 @@ void set_slave_address(uint8_t addr) {
 }
 
 void dump_fifos(uint8_t *output, uint8_t *output1, uint16_t dump_level) {
-  printf("Here!\r\n");
   // restart transmit
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
@@ -526,7 +525,7 @@ void gyro_only_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
   return;
 }
 
- 
+
 void gyro_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
   __delay_cycles(48000);
   // Set slave address //
@@ -607,7 +606,6 @@ int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
   UCB0CTLW0 &= ~UCSWRST; // enable
-
   uint8_t temp = read_reg(GYRO_ID_ADDRESS);
   if(temp != GYRO_ID_RETURN) {
     PRINTF("Error initializing gyro!\r\n");
@@ -720,6 +718,45 @@ uint16_t read_pedometer_steps(void) {
   return stepsTaken;
 }
 
+void gyroscope_read(int16_t *x, int16_t *y, int16_t *z) {
+
+	uint8_t temp_l, temp_h;
+	uint8_t status;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+	status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  while(!(status & GYRO_MASK)) {
+    __delay_cycles(100);
+		set_slave_address(GYRO_SLAVE_ADDRESS);
+    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  }
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTX_L_G);
+
+  //set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTX_H_G);
+
+  *x = (temp_h << 8) + temp_l;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTY_L_G);
+
+  //set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTY_H_G);
+
+  *y = (temp_h << 8) + temp_l;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTZ_L_G);
+
+  //set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTZ_H_G);
+
+  *z = (temp_h << 8) + temp_l;
+
+  return;
+}
 
 void read_raw_gyro(uint16_t *x, uint16_t *y, uint16_t *z) {
   uint8_t temp_l, temp_h;
@@ -939,10 +976,9 @@ void fifo_reset(void) {
   return;
 }
 
-void lsm_disable(void) {
+void lsm_accel_disable(void) {
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL,0x0);
-  write_reg(LSM6DS3_ACC_GYRO_CTRL2_G,0x0);
   return;
 }
 
@@ -971,3 +1007,18 @@ void accel_odr_reenable(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
   set_slave_address(GYRO_SLAVE_ADDRESS);
   write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL,dataToWrite);
 }
+
+// Note, this does overwrite the CTRL4_C register, but that isn't a problem
+// unless the fifo is active.
+void lsm_gyro_sleep() {
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL4_C,0x40);
+}
+
+// Brings the gyro back from sleep mode
+void lsm_gyro_reenable() {
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  write_reg(LSM6DS3_ACC_GYRO_CTRL4_C,0x00);
+}
+
+
