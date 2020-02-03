@@ -12,6 +12,7 @@ void accelerometer_read_profile();
 void accelerometer_write_profile();
 void accelerometer_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool
 highperf);
+float accelerometer_read_x(void);
 
 #define ACCL_I2C_ADDRESS 0x6B
 #define ACCL_ID_ADDRESS 0x0F /*WhoAmI (ID) register*/

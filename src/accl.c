@@ -183,6 +183,29 @@ void dummy_accel_read(uint16_t *x, uint16_t *y, uint16_t *z) {
   return;
 }
 
+#define SCALER 100
+float accelerometer_read_x() {
+	int16_t x;
+  uint8_t temp_l, temp_h;
+  uint8_t status;
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  while(!(status & XL_MASK)) {
+    __delay_cycles(100);
+    set_i2c_address(ACCL_I2C_ADDRESS);
+    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  }
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTX_L_XL);
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTX_H_XL);
+
+  x = (temp_h << 8) + temp_l;
+	return (float)((float)x/SCALER);
+}
+
 void accelerometer_read(uint16_t *x, uint16_t *y, uint16_t *z) {
   uint8_t temp_l, temp_h;
   uint8_t status;

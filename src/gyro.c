@@ -718,6 +718,30 @@ uint16_t read_pedometer_steps(void) {
   return stepsTaken;
 }
 
+#define SCALER 100
+float gyroscope_read_x() {
+	int16_t x;
+	uint8_t temp_l, temp_h;
+	uint8_t status;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+	status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  while(!(status & GYRO_MASK)) {
+    __delay_cycles(100);
+		set_slave_address(GYRO_SLAVE_ADDRESS);
+    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  }
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTX_L_G);
+
+  //set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTX_H_G);
+
+  x = (temp_h << 8) + temp_l;
+	return (float)((float)x/SCALER);
+}
+
 void gyroscope_read(int16_t *x, int16_t *y, int16_t *z) {
 
 	uint8_t temp_l, temp_h;
