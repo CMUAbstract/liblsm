@@ -87,7 +87,7 @@ int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = ACCL_I2C_ADDRESS; // Set slave address
   UCB0CTLW0 &= ~UCSWRST; // enable
-  uint8_t temp = read_register(ACCL_I2C_ADDRESS);
+  uint8_t temp = read_register(ACCL_ID_ADDRESS);
   if(temp != ACCL_ID_RETURN) {
     PRINTF("Error initializing gyro!\r\n");
     return -1;
