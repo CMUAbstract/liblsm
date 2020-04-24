@@ -183,6 +183,7 @@ void dummy_accel_read(uint16_t *x, uint16_t *y, uint16_t *z) {
   return;
 }
 
+#if 0
 #define SCALER 100
 float accelerometer_read_x() {
 	int16_t x;
@@ -205,6 +206,7 @@ float accelerometer_read_x() {
   x = (temp_h << 8) + temp_l;
 	return (float)((float)x/SCALER);
 }
+#endif
 
 void accelerometer_read(uint16_t *x, uint16_t *y, uint16_t *z) {
   uint8_t temp_l, temp_h;

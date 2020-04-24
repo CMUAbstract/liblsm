@@ -2,6 +2,7 @@ LIB = liblsm
 
 
 OBJECTS += \
+  min.o \
   gyro.o \
   accl.o
 
