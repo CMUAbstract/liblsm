@@ -1002,11 +1002,6 @@ void fifo_reset(void) {
   return;
 }
 
-void lsm_accel_disable(void) {
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-  write_reg(LSM6DS3_ACC_GYRO_CTRL1_XL,0x0);
-  return;
-}
 
 void lsm_odr_reenable(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
   uint8_t dataToWrite = 0;

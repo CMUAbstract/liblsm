@@ -68,6 +68,7 @@ void accelerometer_read(uint16_t *x, uint16_t *y, uint16_t *z) {
     __delay_cycles(100);
     set_i2c_address(ACCL_I2C_ADDRESS);
     status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+    //printf("test_ready");
   }
 
   set_i2c_address(ACCL_I2C_ADDRESS);
@@ -129,3 +130,8 @@ int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   return 0;
 }
 
+void lsm_accel_disable(void) {
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  write_register(LSM6DS3_ACC_GYRO_CTRL1_XL,0x0);
+  return;
+}
