@@ -2,10 +2,14 @@
 #include <libmspware/driverlib.h>
 #include <libio/console.h>
 #include <libmspbuiltins/builtins.h>
+#include <libpacarana/pacarana.h>
+
 #define SCALER 100
 
 #include "accl.h"
 #include "lsm6ds3.h"
+
+extern int accel_status;
 
 static void write_register(uint8_t reg,uint8_t val) {
   UCB0CTLW0 |= UCTR | UCTXSTT; // transmit mode and start
@@ -106,7 +110,7 @@ int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   UCB0CTLW0 &= ~UCSWRST; // enable
   uint8_t temp = read_register(ACCL_ID_ADDRESS);
   if(temp != ACCL_ID_RETURN) {
-    PRINTF("Error initializing gyro!\r\n");
+    //PRINTF("Error initializing gyro!\r\n");
     return -1;
     //while(1);
   }
@@ -133,5 +137,6 @@ int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
 void lsm_accel_disable(void) {
   set_i2c_address(ACCL_I2C_ADDRESS);
   write_register(LSM6DS3_ACC_GYRO_CTRL1_XL,0x0);
+  STATE_CHANGE(accel,0);
   return;
 }
