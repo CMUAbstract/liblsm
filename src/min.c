@@ -137,6 +137,6 @@ int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
 void lsm_accel_disable(void) {
   set_i2c_address(ACCL_I2C_ADDRESS);
   write_register(LSM6DS3_ACC_GYRO_CTRL1_XL,0x0);
-  STATE_CHANGE(accel,0);
+  STATE_CHANGE(accel,1);
   return;
 }
