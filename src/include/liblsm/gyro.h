@@ -59,7 +59,7 @@ uint8_t read_fifo_lvl(void);
 uint16_t read_fifo_val(void);
 uint8_t read_fifo_thr(void);
 void read_fifo_trio(uint16_t *x, uint16_t *y, uint16_t *z);
-void gyroscope_read(int16_t *x, int16_t *y, int16_t *z);
+void gyroscope_read(float *x, float *y, float *z);
 
 void fifo_clear(void);
 void lsm_reset(void);

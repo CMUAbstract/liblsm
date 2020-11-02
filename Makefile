@@ -11,7 +11,8 @@ DEPS += \
   libmspware\
   libmsp \
   libio\
-  libmspbuiltins
+  libmspbuiltins\
+  libfxl
 
 
 override SRC_ROOT = ../../src

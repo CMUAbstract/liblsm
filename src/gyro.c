@@ -5,8 +5,10 @@
 
 #include <libmsp/mem.h>
 #include <libio/console.h>
-
+#include <libpacarana/pacarana.h>
+#include <libcapybara/board.h>
 #include <libmspbuiltins/builtins.h>
+#include <libfxl/fxl6408.h>
 #include "gyro.h"
 #include "lsm6ds3.h"
 
@@ -561,14 +563,23 @@ void gyro_init_data_rate(LSM6DS3_ACC_GYRO_ODR_XL_t rate) {
 
 void gyro_init_data_rate_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   // Set slave address //
+  uint8_t temp = 1; 
+  while(temp) {
   UCB0CTLW0 |= UCSWRST; // disable
   UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
   UCB0CTLW0 &= ~UCSWRST; // enable
-
-  uint8_t temp = read_reg(GYRO_ID_ADDRESS);
-  if(temp != GYRO_ID_RETURN) {
-    PRINTF("Error initializing gyro!\r\n");
-    while(1);
+    temp = read_reg(GYRO_ID_ADDRESS);
+    LOG2("ID: %x\r\n",temp);
+    if (temp != GYRO_ID_RETURN) {
+      fxl_clear(BIT_SENSE_SW);
+      __delay_cycles(4800);
+      fxl_set(BIT_SENSE_SW);
+      __delay_cycles(4800);
+    }
+    else {
+      LOG2("Exiting!\r\n");
+      temp = 0;
+    }
   }
 
   if(!highperf) {
@@ -744,45 +755,6 @@ float gyroscope_read_x() {
 	return (float)((float)x/SCALER);
 }
 
-void gyroscope_read(int16_t *x, int16_t *y, int16_t *z) {
-
-	uint8_t temp_l, temp_h;
-	uint8_t status;
-
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-	status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
-  while(!(status & GYRO_MASK)) {
-    __delay_cycles(100);
-		set_slave_address(GYRO_SLAVE_ADDRESS);
-    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
-  }
-
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTX_L_G);
-
-  //set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTX_H_G);
-
-  *x = (temp_h << 8) + temp_l;
-
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTY_L_G);
-
-  //set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTY_H_G);
-
-  *y = (temp_h << 8) + temp_l;
-
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTZ_L_G);
-
-  //set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTZ_H_G);
-
-  *z = (temp_h << 8) + temp_l;
-
-  return;
-}
 
 void read_raw_gyro(uint16_t *x, uint16_t *y, uint16_t *z) {
   uint8_t temp_l, temp_h;

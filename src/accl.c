@@ -149,9 +149,6 @@ void dummy_accel_read(uint16_t *x, uint16_t *y, uint16_t *z) {
   status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
   while(!(status & XL_MASK)) {
     __delay_cycles(500);
-    P1OUT |= BIT0;
-    P1DIR |= BIT0;
-    P1OUT &= ~BIT0;
     set_i2c_address(ACCL_I2C_ADDRESS);
     status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
   }*/
