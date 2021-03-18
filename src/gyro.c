@@ -647,16 +647,24 @@ int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
 
 void gyro_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   // Set slave address //
-  UCB0CTLW0 |= UCSWRST; // disable
-  UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
-  UCB0CTLW0 &= ~UCSWRST; // enable
-
-  uint8_t temp = read_reg(GYRO_ID_ADDRESS);
-  if(temp != GYRO_ID_RETURN) {
-    PRINTF("Error initializing gyro!\r\n");
-    while(1);
+  uint8_t temp = 1; 
+  while(temp) {
+    UCB0CTLW0 |= UCSWRST; // disable
+    UCB0I2CSA = GYRO_SLAVE_ADDRESS; // Set slave address
+    UCB0CTLW0 &= ~UCSWRST; // enable
+    temp = read_reg(GYRO_ID_ADDRESS);
+    LOG2("ID: %x\r\n",temp);
+    if (temp != GYRO_ID_RETURN) {
+      fxl_clear(BIT_SENSE_SW);
+      __delay_cycles(4800);
+      fxl_set(BIT_SENSE_SW);
+      __delay_cycles(4800);
+    }
+    else {
+      LOG2("Exiting!\r\n");
+      temp = 0;
+    }
   }
-
   if(!highperf) {
     set_slave_address(GYRO_SLAVE_ADDRESS);
     // Set bit 4 of CTRL6 to 1
