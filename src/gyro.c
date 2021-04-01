@@ -1022,4 +1022,48 @@ void lsm_gyro_reenable() {
   write_reg(LSM6DS3_ACC_GYRO_CTRL4_C,0x00);
 }
 
+void gyroscope_read(float *xF, float *yF, float *zF) {
+  int16_t x;
+  int16_t y;
+  int16_t z;
+	uint8_t temp_l, temp_h;
+	uint8_t status;
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+	status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  while(!(status & GYRO_MASK)) {
+    __delay_cycles(100);
+		set_slave_address(GYRO_SLAVE_ADDRESS);
+    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  }
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTX_L_G);
+
+  //set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTX_H_G);
+
+  x = (temp_h << 8) + temp_l;
+  *xF = (float)((float)x/SCALER);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTY_L_G);
+
+  //set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTY_H_G);
+
+  y = (temp_h << 8) + temp_l;
+  *yF = (float)((float)y/SCALER);
+
+  set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTZ_L_G);
+
+  //set_slave_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTZ_H_G);
+
+  z = (temp_h << 8) + temp_l;
+  *zF = (float)((float)z/SCALER);
+
+  return;
+}
 

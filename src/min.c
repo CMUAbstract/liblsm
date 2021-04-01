@@ -10,7 +10,7 @@
 #include "gyro.h"
 #include "lsm6ds3.h"
 
-extern int accel_status;
+extern volatile __nv int accel_status;
 
 static void write_register(uint8_t reg,uint8_t val) {
   UCB0CTLW0 |= UCTR | UCTXSTT; // transmit mode and start
@@ -105,51 +105,6 @@ void accelerometer_read(uint16_t *x, uint16_t *y, uint16_t *z) {
 
 #define LOC_SCALER 100
 
-void gyroscope_read(float *xF, float *yF, float *zF) {
-  int16_t x;
-  int16_t y;
-  int16_t z;
-	uint8_t temp_l, temp_h;
-	uint8_t status;
-
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-	status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
-  while(!(status & GYRO_MASK)) {
-    __delay_cycles(100);
-		set_slave_address(GYRO_SLAVE_ADDRESS);
-    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
-  }
-
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTX_L_G);
-
-  //set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTX_H_G);
-
-  x = (temp_h << 8) + temp_l;
-  *xF = (float)((float)x/LOC_SCALER);
-
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTY_L_G);
-
-  //set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTY_H_G);
-
-  y = (temp_h << 8) + temp_l;
-  *yF = (float)((float)y/LOC_SCALER);
-
-  set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_l = read_reg(LSM6DS3_ACC_GYRO_OUTZ_L_G);
-
-  //set_slave_address(GYRO_SLAVE_ADDRESS);
-  temp_h = read_reg(LSM6DS3_ACC_GYRO_OUTZ_H_G);
-
-  z = (temp_h << 8) + temp_l;
-  *zF = (float)((float)z/LOC_SCALER);
-
-  return;
-}
-
 int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
   // Set slave address //
   UCB0CTLW0 |= UCSWRST; // disable
@@ -184,29 +139,7 @@ int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf) {
 void lsm_accel_disable(void) {
   set_i2c_address(ACCL_I2C_ADDRESS);
   write_register(LSM6DS3_ACC_GYRO_CTRL1_XL,0x0);
-  //STATE_CHANGE(accel,1); //TODO add back in
+  STATE_CHANGE(accel,0); //TODO add back in
   return;
-}
-
-float accelerometer_read_z() {
-	int16_t x;
-  uint8_t temp_l, temp_h;
-  uint8_t status;
-  set_i2c_address(ACCL_I2C_ADDRESS);
-  status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
-  while(!(status & XL_MASK)) {
-    __delay_cycles(100);
-    set_i2c_address(ACCL_I2C_ADDRESS);
-    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
-  }
-
-  set_i2c_address(ACCL_I2C_ADDRESS);
-  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTZ_L_XL);
-
-  set_i2c_address(ACCL_I2C_ADDRESS);
-  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTZ_H_XL);
-
-  x = (temp_h << 8) + temp_l;
-	return (float)((float)x/LOC_SCALER);
 }
 

@@ -224,3 +224,25 @@ void accelerometer_write_profile() {
   return;
 }
 
+float accelerometer_read_z() {
+	int16_t x;
+  uint8_t temp_l, temp_h;
+  uint8_t status;
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  while(!(status & XL_MASK)) {
+    __delay_cycles(100);
+    set_i2c_address(ACCL_I2C_ADDRESS);
+    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  }
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTZ_L_XL);
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTZ_H_XL);
+
+  x = (temp_h << 8) + temp_l;
+	return (float)((float)x/SCALER);
+}
+
