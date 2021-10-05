@@ -1022,6 +1022,46 @@ void lsm_gyro_reenable() {
   write_reg(LSM6DS3_ACC_GYRO_CTRL4_C,0x00);
 }
 
+void read_g(int16_t *x, int16_t *y, int16_t *z) {
+  uint8_t temp_l, temp_h;
+  uint8_t status;
+  set_i2c_address(GYRO_SLAVE_ADDRESS);
+  status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  while(!(status & 0x2)) { //Check XL data ready bit in status reg
+    __delay_cycles(100);
+    set_i2c_address(GYRO_SLAVE_ADDRESS);
+    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+    //printf("test_ready");
+  }
+
+  set_i2c_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTX_L_G);
+
+  set_i2c_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTX_H_G);
+
+  *x = (temp_h << 8) + temp_l;
+
+  set_i2c_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTY_L_G);
+
+  set_i2c_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTY_H_G);
+
+  *y = (temp_h << 8) + temp_l;
+
+  set_i2c_address(GYRO_SLAVE_ADDRESS);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTZ_L_G);
+
+  set_i2c_address(GYRO_SLAVE_ADDRESS);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTZ_H_G);
+
+  *z = (temp_h << 8) + temp_l;
+
+  return;
+}
+
+
 void gyroscope_read(float *xF, float *yF, float *zF) {
   int16_t x;
   int16_t y;

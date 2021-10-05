@@ -15,6 +15,7 @@ highperf);
 float accelerometer_read_x(void);
 float accelerometer_read_z(void);
 int accel_only_init_odr_hm(LSM6DS3_ACC_GYRO_ODR_XL_t rate, bool highperf);
+void read_xl(int16_t *x, int16_t *y, int16_t *z);
 
 #define ACCL_I2C_ADDRESS 0x6B
 #define ACCL_ID_ADDRESS 0x0F /*WhoAmI (ID) register*/

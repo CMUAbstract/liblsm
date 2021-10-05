@@ -74,6 +74,8 @@ void dump_fifo_high(uint8_t *output, uint16_t dump_level);
 void dump_fifos(uint8_t *output, uint8_t *output1, uint16_t dump_level);
 void lsm_gyro_sleep(void);
 void lsm_gyro_reenable(void);
+
+void read_g(int16_t *x, int16_t *y, int16_t *z);
 // FIFO_THR % 3 = 1 to get this to work!!!
 float gyroscope_read_x(void);
 #define FIFO_THR 0xA

@@ -246,3 +246,42 @@ float accelerometer_read_z() {
 	return (float)((float)x/SCALER);
 }
 
+void read_xl(int16_t *x, int16_t *y, int16_t *z) {
+  uint8_t temp_l, temp_h;
+  uint8_t status;
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+  while(!(status & 0x1)) { //Check XL data ready bit in status reg
+    __delay_cycles(100);
+    set_i2c_address(ACCL_I2C_ADDRESS);
+    status = read_register(LSM6DS3_ACC_GYRO_STATUS_REG);
+    //printf("test_ready");
+  }
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTX_L_XL);
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTX_H_XL);
+
+  *x = (temp_h << 8) + temp_l;
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTY_L_XL);
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTY_H_XL);
+
+  *y = (temp_h << 8) + temp_l;
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_l = read_register(LSM6DS3_ACC_GYRO_OUTZ_L_XL);
+
+  set_i2c_address(ACCL_I2C_ADDRESS);
+  temp_h = read_register(LSM6DS3_ACC_GYRO_OUTZ_H_XL);
+
+  *z = (temp_h << 8) + temp_l;
+
+  return;
+}
+
